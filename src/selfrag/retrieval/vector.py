@@ -19,9 +19,8 @@ class VectorRetriever:
 
     async def aretrieve(self, query: str, *, k: int, **kw: Any) -> RetrievalResult:
         t0 = time.perf_counter()
-        hits = await self._store.asimilarity_search_with_relevance_scores(
-            query, k=k, filter=kw.get("where")
-        )
+
+        hits = await self._store.asimilarity_search_with_score(query, k=k, filter=kw.get("where"))
         return RetrievalResult(
             documents=[d for d, _ in hits],
             strategy=self.name,
