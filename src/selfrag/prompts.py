@@ -41,3 +41,46 @@ Context:
 {context}
 
 Question: {question}"""
+
+GROUND = """Check whether this answer is supported by the context it was given.
+
+A claim is supported if the context states it or directly implies it. Correct
+outside knowledge that isn't in the context counts as unsupported.
+
+An answer that says the context lacks the information is grounded — declining
+to answer is not a claim.
+
+Context:
+{context}
+
+Answer:
+{answer}"""
+
+USEFUL = """Does this answer make full use of the context to address the question?
+
+If the question has several parts, the answer must address each part the
+context supports. An answer that declines while the context contains relevant
+material is not useful — partial information is better than none.
+
+An answer is only useful in declining when the context genuinely lacks what
+was asked for.
+
+Question: {question}
+
+Context:
+{context}
+
+Answer:
+{answer}"""
+
+STRICTER = """Answer the question using only the context below.
+
+A previous attempt included claims absent from the context:
+{unsupported}
+
+Restrict yourself to what the context states. Where it's silent, say so.
+
+Context:
+{context}
+
+Question: {question}"""

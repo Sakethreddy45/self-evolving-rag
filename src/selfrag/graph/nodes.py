@@ -2,16 +2,18 @@ import asyncio
 
 from langchain_core.documents import Document
 
-from selfrag.graph.schemas import Plan, Relevance
+from selfrag.graph.schemas import Grounding, Plan, Relevance, Usefulness
 from selfrag.graph.state import GraphState
 from selfrag.models import chat
-from selfrag.prompts import ANSWER, GRADE, PLAN, REPLAN
+from selfrag.prompts import ANSWER, GRADE, GROUND, PLAN, REPLAN, STRICTER, USEFUL
 from selfrag.retrieval.base import Retriever
 from selfrag.settings import Role, settings
 
-# provenance: which sub-query pulled this doc, so grading can score it
-# against that query instead of the composite question
+
 RETRIEVED_BY = "_retrieved_by"
+
+def _context(docs: list[Document]) -> str:
+    return "\n\n---\n\n".join(d.page_content for d in docs)
 
 
 async def plan(state: GraphState) -> GraphState:
@@ -101,12 +103,52 @@ async def grade(state: GraphState) -> GraphState:
 
 async def generate(state: GraphState) -> GraphState:
     docs = state.get("documents", [])
-    context = "\n\n---\n\n".join(d.page_content for d in docs)
-    msg = await chat(Role.GENERATE).ainvoke(
-        ANSWER.format(context=context, question=state["question"])
-    )
-    return {"answer": msg.content, "steps": [{"node": "generate", "n_docs": len(docs)}]}
+    unsupported = state.get("unsupported") or []
 
+    prompt = (
+        STRICTER.format(
+            context=_context(docs),
+            question=state["question"],
+            unsupported="\n".join(f"- {c}" for c in unsupported),
+        )
+        if unsupported
+        else ANSWER.format(context=_context(docs), question=state["question"])
+    )
+
+    msg = await chat(Role.GENERATE).ainvoke(prompt)
+    n = state.get("regens", 0)
+    return {
+        "answer": msg.content,
+        "regens": n + 1,
+        "steps": [{"node": "generate", "n_docs": len(docs), "attempt": n + 1}],
+    }
+
+async def verify(state: GraphState) -> GraphState:
+    context = _context(state.get("documents", []))
+    answer = state["answer"]
+
+    # independent checks, so run them together
+    ground, useful = await asyncio.gather(
+        chat(Role.GRADE)
+        .with_structured_output(Grounding)
+        .ainvoke(GROUND.format(context=context, answer=answer)),
+        chat(Role.GRADE)
+        .with_structured_output(Usefulness)
+        .ainvoke(USEFUL.format(question=state["question"], context=context, answer=answer)),
+    )
+
+    return {
+        "unsupported": ground.unsupported,
+        "steps": [
+            {
+                "node": "verify",
+                "grounded": ground.grounded,
+                "useful": useful.useful,
+                "unsupported": len(ground.unsupported),
+                "reason": useful.reason,
+            }
+        ],
+    }
 
 async def give_up(state: GraphState) -> GraphState:
     return {

@@ -17,3 +17,14 @@ class Plan(BaseModel):
         min_length=1,
         max_length=3,
     )
+
+class Grounding(BaseModel):
+    grounded: bool = Field(description="every claim traces to the context")
+    unsupported: list[str] = Field(
+        default_factory=list, description="claims not found in the context"
+    )
+
+
+class Usefulness(BaseModel):
+    useful: bool = Field(description="addresses what was asked")
+    reason: str = Field(description="one short clause")

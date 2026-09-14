@@ -27,6 +27,7 @@ class RetrievalPolicy(BaseModel):
     max_rewrites: int = 2
     chunk_size: int = 1500
     chunk_overlap: int = 200
+    max_regens: int = 1
 
 
 class Settings(BaseSettings):

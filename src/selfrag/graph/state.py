@@ -14,6 +14,8 @@ class GraphState(TypedDict, total=False):
     answer: str
     rewrites: int
     graded: list[dict[str, Any]]
+    regens: int
+    unsupported: list[str]
 
     # append-only, so every node's contribution survives the merge
     steps: Annotated[list[dict[str, Any]], add]
