@@ -1,0 +1,47 @@
+# Ground truth, written by hand. Nothing in the system may edit this file —
+# it's the only check that catches answers which are grounded in the
+# retrieved context but still wrong.
+
+- id: task-decomposition
+  question: what is task decomposition
+  must_contain:
+    - breaking a complex task into smaller sub-steps
+    - chain-of-thought prompting as a way to do it
+  tags: [factual]
+
+- id: posts-2024
+  question: what did she write about in 2024
+  must_contain:
+    - a post about the quality of human data or annotation
+    - a post about hallucination in LLMs
+    - a post about reward hacking
+  tags: [date-filter]
+
+- id: posts-2023
+  question: which posts came out in 2023
+  must_contain:
+    - a post about LLM-powered autonomous agents
+    - a post about prompt engineering
+    - a post about adversarial attacks on LLMs
+  tags: [date-filter]
+
+- id: agents-after-2023
+  question: what did she write about agents after 2023
+  must_contain:
+    - a post about reward hacking
+  tags: [date-filter]
+
+- id: reward-hacking-vs-hallucination
+  question: compare reward hacking and hallucination
+  must_contain:
+    - reward hacking means exploiting flaws in the reward function
+    - hallucination means fabricated or unfaithful model output
+    - the corpus does not directly compare the two
+  tags: [multi-topic]
+
+- id: agent-memory
+  question: what types of memory do agents use
+  must_contain:
+    - short-term memory as in-context learning
+    - long-term memory via an external vector store
+  tags: [factual]

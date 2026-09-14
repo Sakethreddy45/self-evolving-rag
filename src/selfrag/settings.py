@@ -46,7 +46,7 @@ class Settings(BaseSettings):
         default_factory=lambda: {
             Role.ROUTE: ModelSpec(name="gpt-4o"),
             Role.GRADE: ModelSpec(name="gpt-4o-mini", max_concurrency=8),
-            Role.REWRITE: ModelSpec(name="gpt-4o", temperature=0.3),
+            Role.REWRITE: ModelSpec(name="gpt-4o", temperature=0.0),
             Role.GENERATE: ModelSpec(name="gpt-4o", timeout_s=60.0),
         }
     )
