@@ -25,9 +25,9 @@ class RetrievalPolicy(BaseModel):
     k: int = 8
     min_surviving_docs: int = 2
     max_rewrites: int = 2
+    max_regens: int = 1
     chunk_size: int = 1500
     chunk_overlap: int = 200
-    max_regens: int = 1
 
 
 class Settings(BaseSettings):
@@ -38,15 +38,14 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    # validation_alias escapes env_prefix so the conventional name works,
-    # which matters because the openai sdk looks for it too
+   
     openai_api_key: str = Field(validation_alias="OPENAI_API_KEY")
     embed_model: str = "text-embedding-3-large"
 
     models: dict[Role, ModelSpec] = Field(
         default_factory=lambda: {
             Role.ROUTE: ModelSpec(name="gpt-4o"),
-            Role.GRADE: ModelSpec(name="gpt-4o", max_concurrency=24),
+            Role.GRADE: ModelSpec(name="gpt-4o-mini", max_concurrency=8),
             Role.REWRITE: ModelSpec(name="gpt-4o", temperature=0.3),
             Role.GENERATE: ModelSpec(name="gpt-4o", timeout_s=60.0),
         }
@@ -59,6 +58,10 @@ class Settings(BaseSettings):
     @property
     def chroma_dir(self) -> Path:
         return self.data_dir / "chroma"
+
+    @property
+    def trajectory_db(self) -> Path:
+        return self.data_dir / "trajectories.db"
 
 
 @lru_cache

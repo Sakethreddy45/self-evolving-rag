@@ -76,7 +76,7 @@ async def grade(state: GraphState) -> GraphState:
         async with sem:
             return await llm.ainvoke(
                 GRADE.format(
-                    document=doc.page_content,
+                    document=doc.page_content[:600],
                     metadata={k: doc.metadata.get(k) for k in ("source", "published")},
                     query=doc.metadata[RETRIEVED_BY],
                 )

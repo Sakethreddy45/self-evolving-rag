@@ -33,9 +33,12 @@ Query: {query}"""
 
 ANSWER = """Answer the question using only the context below.
 
-If the context doesn't contain the answer, say so plainly. Don't fill gaps
-from your own knowledge — an admission of missing context is a useful signal
-downstream, a plausible guess isn't.
+Give everything the context supports before noting anything it lacks. If the
+question asks for a comparison the context doesn't make directly, describe each
+side from what's there and say the direct comparison isn't in the source.
+
+Never pad with outside knowledge. But never withhold something the context
+does contain because it falls short of the full question.
 
 Context:
 {context}
@@ -56,14 +59,17 @@ Context:
 Answer:
 {answer}"""
 
-USEFUL = """Does this answer make full use of the context to address the question?
+USEFUL = """Does this answer extract everything the context offers toward the question?
 
-If the question has several parts, the answer must address each part the
-context supports. An answer that declines while the context contains relevant
-material is not useful — partial information is better than none.
+Judge the answer against the context, not against an ideal answer. If the
+context only supports a partial response, a partial response is correct —
+and saying which part is missing is better still.
 
-An answer is only useful in declining when the context genuinely lacks what
-was asked for.
+Not useful means: the context contained relevant material the answer ignored,
+or the answer drifted to a different topic.
+
+Useful means: the answer used what was there, including when what was there
+was less than the question asked for.
 
 Question: {question}
 

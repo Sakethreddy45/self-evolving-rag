@@ -24,8 +24,8 @@ def after_verify(state: GraphState) -> Literal["__end__", "generate", "plan", "g
     if last["grounded"] and last["useful"]:
         return "__end__"
 
-   
-    if not last["grounded"] and state.get("regens", 0) <= p.max_regens:
+
+    if state.get("regens", 0) <= p.max_regens:
         return "generate"
     if state.get("rewrites", 0) > p.max_rewrites:
         return "give_up"

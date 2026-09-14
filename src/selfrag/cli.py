@@ -1,13 +1,12 @@
 import asyncio
 import sys
 
-from selfrag.graph.build import build
 from selfrag.retrieval.vector import VectorRetriever, open_store
+from selfrag.runner import Runner
 
 
 async def main(question: str) -> None:
-    graph = build(VectorRetriever(store=open_store()))
-    out = await graph.ainvoke({"question": question})
+    out = await Runner(VectorRetriever(store=open_store())).ask(question)
 
     for s in out["steps"]:
         print(" ", s)
