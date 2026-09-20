@@ -63,6 +63,10 @@ class Settings(BaseSettings):
     def trajectory_db(self) -> Path:
         return self.data_dir / "trajectories.db"
 
+    @property
+    def artifact_db(self) -> Path:
+        return self.data_dir / "artifacts.db"
+
 
 @lru_cache
 def settings() -> Settings:

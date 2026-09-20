@@ -8,8 +8,16 @@ from selfrag.models import chat
 from selfrag.prompts import ANSWER, GRADE, GROUND, PLAN, REPLAN, STRICTER, USEFUL
 from selfrag.retrieval.base import Retriever
 from selfrag.settings import Role, settings
+from selfrag.learning.artifacts import ArtifactStore
 
 
+_artifacts: ArtifactStore | None = None
+
+def artifact_store() -> ArtifactStore:
+    global _artifacts
+    if _artifacts is None:
+        _artifacts = ArtifactStore(settings().artifact_db)
+    return _artifacts
 RETRIEVED_BY = "_retrieved_by"
 
 def _context(docs: list[Document]) -> str:
@@ -20,17 +28,21 @@ async def plan(state: GraphState) -> GraphState:
     llm = chat(Role.REWRITE).with_structured_output(Plan)
     n = state.get("rewrites", 0)
 
-    if n == 0:
-        out = await llm.ainvoke(PLAN.format(question=state["question"]))
-    else:
-        out = await llm.ainvoke(
-            REPLAN.format(queries=state["queries"], question=state["question"])
-        )
+    base = (
+        PLAN.format(question=state["question"])
+        if n == 0
+        else REPLAN.format(queries=state["queries"], question=state["question"])
+    )
+    hints = [a.content for a in artifact_store().live("plan_hint")]
+    prompt = base + "\n\n" + "\n\n".join(hints) if hints else base
 
+    out = await llm.ainvoke(prompt)
     return {
         "queries": out.queries,
         "rewrites": n + 1,
-        "steps": [{"node": "plan", "attempt": n + 1, "queries": out.queries}],
+        "steps": [
+            {"node": "plan", "attempt": n + 1, "queries": out.queries, "hints": len(hints)}
+        ],
     }
 
 
