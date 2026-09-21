@@ -4,21 +4,25 @@ from langchain_core.documents import Document
 
 from selfrag.graph.schemas import Grounding, Plan, Relevance, Usefulness
 from selfrag.graph.state import GraphState
+from selfrag.learning.artifacts import ArtifactStore
 from selfrag.models import chat
 from selfrag.prompts import ANSWER, GRADE, GROUND, PLAN, REPLAN, STRICTER, USEFUL
 from selfrag.retrieval.base import Retriever
 from selfrag.settings import Role, settings
-from selfrag.learning.artifacts import ArtifactStore
 
+# provenance: which sub-query pulled this doc, so grading can score it
+# against that query instead of the composite question
+RETRIEVED_BY = "_retrieved_by"
 
 _artifacts: ArtifactStore | None = None
+
 
 def artifact_store() -> ArtifactStore:
     global _artifacts
     if _artifacts is None:
         _artifacts = ArtifactStore(settings().artifact_db)
     return _artifacts
-RETRIEVED_BY = "_retrieved_by"
+
 
 def _context(docs: list[Document]) -> str:
     return "\n\n---\n\n".join(d.page_content for d in docs)
@@ -61,13 +65,17 @@ def make_retrieve(retriever: Retriever):
                     d.metadata[RETRIEVED_BY] = query
                     seen[key] = d
 
+        enumerated = any("enumerat" in str(r.params.get("mode", "")) for r in results)
+
         return {
             "documents": list(seen.values()),
+            "enumerated": enumerated,
             "steps": [
                 {
                     "node": "retrieve",
                     "strategy": results[0].strategy,
                     "n": len(seen),
+                    "enumerated": enumerated,
                     "latency_ms": round(max(r.latency_ms for r in results)),
                 }
             ],
@@ -80,6 +88,17 @@ async def grade(state: GraphState) -> GraphState:
     docs = state.get("documents", [])
     if not docs:
         return {"documents": [], "graded": [], "steps": [{"node": "grade", "kept": 0, "of": 0}]}
+
+    # enumerated results are complete by construction rather than ranked by
+    # relevance, so per-document relevance is the wrong question to ask of them
+    if state.get("enumerated"):
+        return {
+            "documents": docs,
+            "graded": [],
+            "steps": [
+                {"node": "grade", "kept": len(docs), "of": len(docs), "skipped": "enumerated"}
+            ],
+        }
 
     llm = chat(Role.GRADE).with_structured_output(Relevance)
     sem = asyncio.Semaphore(settings().models[Role.GRADE].max_concurrency)
@@ -135,6 +154,7 @@ async def generate(state: GraphState) -> GraphState:
         "steps": [{"node": "generate", "n_docs": len(docs), "attempt": n + 1}],
     }
 
+
 async def verify(state: GraphState) -> GraphState:
     context = _context(state.get("documents", []))
     answer = state["answer"]
@@ -161,6 +181,7 @@ async def verify(state: GraphState) -> GraphState:
             }
         ],
     }
+
 
 async def give_up(state: GraphState) -> GraphState:
     return {

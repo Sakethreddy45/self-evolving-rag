@@ -13,6 +13,7 @@ class Case:
     must_contain: list[str]
     tags: list[str] = field(default_factory=list)
     must_not_contain: list[str] = field(default_factory=list)
+    expect_sources: list[str] = field(default_factory=list)
 
 
 def load(path: Path = DEFAULT_PATH) -> list[Case]:

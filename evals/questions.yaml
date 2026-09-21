@@ -15,7 +15,8 @@
     - a post about the quality of human data or annotation
     - a post about hallucination in LLMs
     - a post about reward hacking
-  tags: [date-filter]
+  expect_sources: [human-data-quality, hallucination, reward-hacking]
+  tags: [enumerate]
 
 - id: posts-2023
   question: which posts came out in 2023
@@ -23,12 +24,14 @@
     - a post about LLM-powered autonomous agents
     - a post about prompt engineering
     - a post about adversarial attacks on LLMs
-  tags: [date-filter]
+  expect_sources: [agent, prompt-engineering, adv-attack-llm]
+  tags: [enumerate]
 
 - id: agents-after-2023
   question: what did she write about agents after 2023
   must_contain:
     - a post about reward hacking
+  expect_sources: [reward-hacking]
   tags: [date-filter]
 
 - id: reward-hacking-vs-hallucination

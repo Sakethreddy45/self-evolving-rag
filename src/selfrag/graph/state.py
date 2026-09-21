@@ -13,9 +13,13 @@ class GraphState(TypedDict, total=False):
     documents: list[Document]
     answer: str
     rewrites: int
-    graded: list[dict[str, Any]]
     regens: int
+    graded: list[dict[str, Any]]
     unsupported: list[str]
+
+    # set by retrieve when the strategy returned a complete set rather than
+    # a ranked one, which changes what grading should do with it
+    enumerated: bool
 
     # append-only, so every node's contribution survives the merge
     steps: Annotated[list[dict[str, Any]], add]

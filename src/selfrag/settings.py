@@ -15,8 +15,8 @@ class Role(StrEnum):
 
 class ModelSpec(BaseModel):
     name: str
-    temperature: float = 0.0
-    timeout_s: float = 30.0
+    temperature: float | None = 0.0
+    timeout_s: float = 60.0
     max_retries: int = 3
     max_concurrency: int = 16
 
@@ -44,13 +44,12 @@ class Settings(BaseSettings):
 
     models: dict[Role, ModelSpec] = Field(
         default_factory=lambda: {
-            Role.ROUTE: ModelSpec(name="gpt-4o"),
-            Role.GRADE: ModelSpec(name="gpt-4o-mini", max_concurrency=8),
-            Role.REWRITE: ModelSpec(name="gpt-4o", temperature=0.0),
-            Role.GENERATE: ModelSpec(name="gpt-4o", timeout_s=60.0),
+            Role.ROUTE: ModelSpec(name="gpt-5.4-mini"),
+            Role.GRADE: ModelSpec(name="gpt-5.4-mini", max_concurrency=8),
+            Role.REWRITE: ModelSpec(name="gpt-5.4"),
+            Role.GENERATE: ModelSpec(name="gpt-5.4", timeout_s=120.0),
         }
     )
-
     retrieval: RetrievalPolicy = RetrievalPolicy()
     data_dir: Path = Path("data")
     collection: str = "docs"

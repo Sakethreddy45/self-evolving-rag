@@ -6,14 +6,16 @@ from selfrag.settings import Role, settings
 def chat(role: Role, **overrides) -> ChatOpenAI:
     s = settings()
     spec = s.models[role]
-    return ChatOpenAI(
-        model=spec.name,
-        api_key=s.openai_api_key,
-        temperature=spec.temperature,
-        timeout=spec.timeout_s,
-        max_retries=spec.max_retries,
-        **overrides,
-    )
+    kw = {
+        "model": spec.name,
+        "api_key": s.openai_api_key,
+        "timeout": spec.timeout_s,
+        "max_retries": spec.max_retries,
+    }
+    # reasoning models reject temperature, so it's opt-out per spec
+    if spec.temperature is not None:
+        kw["temperature"] = spec.temperature
+    return ChatOpenAI(**kw, **overrides)
 
 
 def embeddings() -> OpenAIEmbeddings:
